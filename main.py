@@ -95,7 +95,7 @@ async def send_ad_to_voice_chat(voice_channel):
 
 
 def can_send(guild_id):
-    now = datetime.utcnow()
+    now = datetime.now(datetime.UTC)
     if guild_id not in voice_cooldown:
         voice_cooldown[guild_id] = now
         return True
@@ -114,7 +114,7 @@ async def ad_loop():
 
         if config["last_sent"]:
             last = config["last_sent"]
-            if datetime.utcnow() - last < timedelta(hours=1):
+            if datetime.now(datetime.UTC) - last < timedelta(hours=1):
                 continue
 
         channels = config["channels"]
@@ -137,7 +137,7 @@ async def ad_loop():
             )
             settings.update_one(
                 {"guild": guild.id},
-                {"$set": {"last_sent": datetime.utcnow()}}
+                {"$set": {"last_sent": datetime.now(datetime.UTC)}}
             )
         except Exception as e:
             print(f"Ad loop error: {e}")
