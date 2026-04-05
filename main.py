@@ -26,7 +26,9 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 ADS = [
     "https://www.profitablecpmratenetwork.com/s8n5nysw?key=5127cd2a6d1edb030c3b6fac2d8fa35c",
-    "https://www.profitablecpmratenetwork.com/y8ky78pi?key=4281ae9af8218801eeec7dac89fbc662"
+    "https://www.profitablecpmratenetwork.com/y8ky78pi?key=4281ae9af8218801eeec7dac89fbc662",
+    "https://amzn.to/4mcqZXJ",
+    "https://amzn.to/4cq5eAq"
 ]
 
 PERMANENT_VC = [
