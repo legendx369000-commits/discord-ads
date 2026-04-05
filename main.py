@@ -42,6 +42,14 @@ PERMANENT_VC = [
 
 handled_vc = set()
 voice_cooldown = {}
+ad_index = 0
+
+
+def get_next_ad():
+    global ad_index
+    ad = ADS[ad_index]
+    ad_index = (ad_index + 1) % len(ADS)
+    return ad
 
 
 def get_config(guild_id):
@@ -58,7 +66,7 @@ def get_config(guild_id):
 
 def create_ad():
     return discord.Embed(
-        description=f"🔗 {random.choice(ADS)}",
+        description=f"🔗 {get_next_ad()}",
         color=discord.Color.blurple()
     ).set_footer(text="Sponsored • limited frequency")
 
@@ -67,29 +75,22 @@ def is_temporary_voice_channel(channel):
     return isinstance(channel, discord.VoiceChannel) and channel.id not in PERMANENT_VC
 
 
-async def create_temp_voice_text_channel(voice_channel):
+async def send_ad_to_voice_chat(voice_channel):
     if voice_channel.id in handled_vc:
         return None
 
     handled_vc.add(voice_channel.id)
 
     try:
-        kwargs = {
-            "name": f"{voice_channel.name}-chat",
-            "topic": f"Chat for {voice_channel.name}"
-        }
+        if not voice_channel.permissions_for(voice_channel.guild.me).send_messages:
+            return None
 
-        if voice_channel.category is not None:
-            kwargs["category"] = voice_channel.category
-
-        text_channel = await voice_channel.guild.create_text_channel(**kwargs)
-        await text_channel.send(
+        await voice_channel.send(
             embed=create_ad(),
             allowed_mentions=discord.AllowedMentions.none()
         )
-        return text_channel
     except Exception as e:
-        print(f"Temp VC error: {e}")
+        print(f"VC chat error: {e}")
         return None
 
 
@@ -154,16 +155,7 @@ async def on_guild_channel_create(channel):
     if not is_temporary_voice_channel(channel):
         return
 
-    text_channel = await create_temp_voice_text_channel(channel)
-    if not text_channel:
-        return
-
-    config = get_config(channel.guild.id)
-    if text_channel.id not in config["channels"]:
-        settings.update_one(
-            {"guild": channel.guild.id},
-            {"$push": {"channels": text_channel.id}}
-        )
+    await send_ad_to_voice_chat(channel)
 
 
 @bot.event
