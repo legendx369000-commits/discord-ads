@@ -86,7 +86,7 @@ async def send_ad_to_voice_chat(voice_channel):
             return None
 
         await voice_channel.send(
-            embed=create_ad(),
+            f"🔗 {get_next_ad()}",
             allowed_mentions=discord.AllowedMentions.none()
         )
     except Exception as e:
@@ -135,7 +135,7 @@ async def ad_loop():
 
         try:
             await channel.send(
-                embed=create_ad(),
+                f"🔗 {get_next_ad()}",
                 allowed_mentions=discord.AllowedMentions.none()
             )
             settings.update_one(
@@ -163,22 +163,27 @@ async def on_guild_channel_create(channel):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    if not after.channel or after.channel.id not in PERMANENT_VC:
+    if not after.channel:
+        return
+
+    if after.channel.id not in PERMANENT_VC:
         return
 
     if not can_send(member.guild.id):
         return
 
     try:
-        for ch in after.channel.guild.text_channels:
-            if ch.category == after.channel.category:
-                await ch.send(
-                    embed=create_ad(),
-                    allowed_mentions=discord.AllowedMentions.none()
-                )
-                break
+        vc = after.channel
+
+        # Send directly in VC chat
+        if vc.permissions_for(vc.guild.me).send_messages:
+            await vc.send(
+                f"🔗 {get_next_ad()}",
+                allowed_mentions=discord.AllowedMentions.none()
+            )
+
     except Exception as e:
-        print(f"Voice trigger error: {e}")
+        print(f"VC error: {e}")
 
 
 @bot.command()
@@ -217,6 +222,12 @@ async def adlist(ctx):
 
     msg = "\n".join([f"<#{cid}>" for cid in channels])
     await ctx.send(f"Ad channels:\n{msg}")
+
+
+@bot.command()
+async def testad(ctx):
+    """Test ad sending - verify bot can send messages"""
+    await ctx.send(f"🔗 {get_next_ad()}")
 
 
 bot.run(TOKEN)
