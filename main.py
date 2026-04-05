@@ -1,6 +1,6 @@
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from pymongo import MongoClient
 import discord
@@ -95,7 +95,7 @@ async def send_ad_to_voice_chat(voice_channel):
 
 
 def can_send(guild_id):
-    now = datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
     if guild_id not in voice_cooldown:
         voice_cooldown[guild_id] = now
         return True
@@ -114,7 +114,10 @@ async def ad_loop():
 
         if config["last_sent"]:
             last = config["last_sent"]
-            if datetime.now(datetime.UTC) - last < timedelta(hours=1):
+            # Ensure retrieved datetime is timezone-aware
+            if last.tzinfo is None:
+                last = last.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) - last < timedelta(hours=1):
                 continue
 
         channels = config["channels"]
@@ -137,7 +140,7 @@ async def ad_loop():
             )
             settings.update_one(
                 {"guild": guild.id},
-                {"$set": {"last_sent": datetime.now(datetime.UTC)}}
+                {"$set": {"last_sent": datetime.now(timezone.utc)}}
             )
         except Exception as e:
             print(f"Ad loop error: {e}")
